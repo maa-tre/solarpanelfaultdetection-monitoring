@@ -100,22 +100,35 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🔧 Hardware Setup
+## 🔧 Hardware Setup (ESP-NOW Gateway)
 
-### ESP32 WiFi Mode
+The system uses a **Gateway Architecture** for robust multi-node monitoring.
 
-1. Upload `firmware/esp32_wifi/esp32_wifi_firmware.ino` to your ESP32
-2. Connect to the "SolarMonitor_Setup" WiFi network (password: solar12345)
-3. Configure your home WiFi via the web interface
-4. In the dashboard, select "WiFi/ESP32" mode and enter the ESP32's IP
+### 1. Gateway Node (ESP32)
+*   **Role**: Receives data from sensors via ESP-NOW, aggregates it, and sends it to the Backend via WiFi.
+*   **Firmware**: `firmware/esp32_gateway_system/gateway_node/gateway_node.ino`
+*   **Setup**:
+    1.  Open in Arduino IDE.
+    2.  Update `ssid` and `password` for your WiFi.
+    3.  Update `flaskServerUrl` to your computer's IP (e.g., `http://192.168.1.69:8000/api/gateway-data`).
+    4.  Flash to ESP32 and **note down its MAC address**.
 
-### Arduino Nano USB Mode
+### 2. Sender Node (Sensor ESP32)
+*   **Role**: Reads sensors (Voltage, Current, DHT, LDR) and sends data to Gateway.
+*   **Firmware**: `firmware/esp32_gateway_system/sender_node/sender_node.ino`
+*   **Setup**:
+    1.  Update `centralNodeAddress` with your **Gateway's MAC address**.
+    2.  Set `SENDER_ID` (e.g., 1 for first node, 2 for second).
+    3.  Flash to a different ESP32.
 
-1. Upload `firmware/arduino_nano/arduino_nano_firmware.ino` to your Arduino Nano
-2. Connect via USB cable
-3. In the dashboard, select "USB/Serial" mode and choose the COM port
+### 3. Register Sender
+*   Go back to `gateway_node.ino`.
+*   Add your Sender's MAC address to the `sender1_mac` (or `sender2_mac`) variable.
+*   Re-flash the Gateway.
 
-See `firmware/arduino_nano/WIRING_GUIDE.md` for detailed wiring instructions.
+### Legacy Modes (Optional)
+*   **Standalone WiFi**: `firmware/esp32_wifi/` (Direct connection, no gateway)
+*   **Arduino Nano**: `firmware/arduino_nano/` (USB Serial connection)
 
 ## 📊 Fault Types
 

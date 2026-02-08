@@ -11,7 +11,7 @@ Features:
 =============================================================================
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -98,6 +98,18 @@ class WhatsAppConfig(BaseModel):
     phone_number: str
     enabled: bool = True
 
+class GatewayRecord(BaseModel):
+    senderId: int
+    ldrValue: int
+    dhtTemp: float
+    humidity: float
+    thermistorTemp: float
+    voltage: float
+    current: float
+    valid: bool
+    gateway_timestamp_ms: int
+
+
 # =============================================================================
 # GLOBAL STATE
 # =============================================================================
@@ -119,7 +131,13 @@ class AppState:
         self.whatsapp_number = ""
         self.last_notified_fault = None  # Track last fault to avoid spam
         self.last_notification_time = None
+        self.last_notified_fault = None  # Track last fault to avoid spam
+        self.last_notification_time = None
         self.notification_cooldown = 60  # Minimum seconds between same fault notifications
+        
+        # Command Queue for Gateway
+        self.pending_commands: Dict[str, str] = {}
+        self.commands_lock = threading.Lock()
         
     def load_model(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -414,6 +432,62 @@ async def set_simulation_mode(fault_type: int):
     state.simulation_fault_type = fault_type
     return {"status": "ok", "fault_type": fault_type, "name": FAULT_PROFILES[fault_type]["name"]}
 
+@app.post("/api/gateway-data")
+async def receive_gateway_data(records: List[GatewayRecord]):
+    """
+    Endpoint to receive aggregated data from ESP32 Gateway.
+    Processes multiple records, runs ML predictions, and broadcasts via WebSocket.
+    """
+    processed_count = 0
+    
+    for record in records:
+        if not record.valid:
+            continue
+            
+        # Convert to standard SensorData
+        # Calculate efficiency dynamically
+        efficiency = calculate_efficiency(record.voltage, record.current, float(record.ldrValue))
+        
+        sensor_data = SensorData(
+            voltage=record.voltage,
+            current=record.current,
+            temperature=record.dhtTemp,
+            light_intensity=float(record.ldrValue),
+            efficiency=efficiency
+        )
+        
+        # Run Prediction
+        prediction = predict_fault(sensor_data)
+        
+        # Send WhatsApp if fault detected (and enabled)
+        if prediction.is_fault:
+            await send_whatsapp_notification(
+                prediction.fault_type, 
+                sensor_data.model_dump(), 
+                is_simulator=False
+            )
+            
+        # Broadcast to WebSocket Clients
+        # alerting frontend that this is from a specific sender
+        payload = {
+            "type": "gateway_data",
+            "sender_id": record.senderId,
+            "sensor_data": sensor_data.model_dump(),
+            "prediction": prediction.model_dump(),
+            "timestamp": record.gateway_timestamp_ms
+        }
+        
+        # Broadcast
+        for client in state.connected_clients:
+            try:
+                await client.send_json(payload)
+            except:
+                pass # Handle disconnected clients
+                
+        processed_count += 1
+        
+    return {"status": "success", "processed": processed_count}
+
 @app.get("/api/serial-ports")
 async def list_serial_ports():
     ports = [{"port": p.device, "description": p.description} for p in serial.tools.list_ports.comports()]
@@ -485,6 +559,40 @@ async def configure_whatsapp(config: WhatsAppConfig):
         "phone_number": phone,
         "enabled": config.enabled
     }
+
+# =============================================================================
+# COMMAND API (For Bi-directional Communication)
+# =============================================================================
+class CommandRequest(BaseModel):
+    station_id: int
+    command: str
+
+@app.post("/api/command")
+async def queue_command(request: CommandRequest):
+    """Queue a command for a specific station (e.g., TOGGLE_RELAY)."""
+    station_id = str(request.station_id)
+    
+    with state.commands_lock:
+        state.pending_commands[station_id] = request.command
+    
+    print(f"🕹️ Command Queued for Station {station_id}: {request.command}")
+    return {"status": "success", "message": "Command queued", "station_id": station_id}
+
+@app.get("/api/get-command/{station_id}")
+async def get_pending_command(station_id: str):
+    """Poll endpoint for Gateway to check for pending commands."""
+    command = None
+    with state.commands_lock:
+        if station_id in state.pending_commands:
+            command = state.pending_commands.pop(station_id)
+            print(f"🚀 Command Sent to Gateway for Station {station_id}: {command}")
+    
+    if command:
+        return {"station_id": int(station_id), "command": command}
+    else:
+        # Return 204 No Content if no command
+        return Response(status_code=204)    
+
 
 @app.post("/api/whatsapp/test")
 async def test_whatsapp():
@@ -605,7 +713,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json({
                     "type": "data",
                     "sensor_data": sensor_data,
-                    "prediction": prediction.dict()
+                    "prediction": prediction.model_dump()
                 })
             
             await asyncio.sleep(0.5)  # 2 updates per second

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Sun, Zap, Thermometer, Eye, Activity, Wifi, Usb, 
+import {
+  Sun, Zap, Thermometer, Eye, Activity, Wifi, Usb,
   Play, Pause, Settings, AlertTriangle, CheckCircle,
   TrendingUp, Battery, Radio, RefreshCw, MessageCircle, Percent
 } from 'lucide-react'
@@ -42,35 +42,35 @@ interface HistoryEntry {
 
 // Fault type colors and info (5 classes including Dust)
 const FAULT_INFO: Record<string, { color: string, gradient: string, icon: string, description: string }> = {
-  'Normal': { 
-    color: '#22c55e', 
+  'Normal': {
+    color: '#22c55e',
     gradient: 'from-green-500 to-emerald-500',
-    icon: '✅', 
-    description: 'System operating normally' 
+    icon: '✅',
+    description: 'System operating normally'
   },
-  'Open_Circuit': { 
-    color: '#a855f7', 
+  'Open_Circuit': {
+    color: '#a855f7',
     gradient: 'from-purple-500 to-violet-500',
-    icon: '🔌', 
-    description: 'Circuit connection broken' 
+    icon: '🔌',
+    description: 'Circuit connection broken'
   },
-  'Partial_Shading': { 
-    color: '#f59e0b', 
+  'Partial_Shading': {
+    color: '#f59e0b',
     gradient: 'from-amber-500 to-orange-500',
-    icon: '🌤️', 
-    description: 'Shadows blocking sunlight' 
+    icon: '🌤️',
+    description: 'Shadows blocking sunlight'
   },
-  'Short_Circuit': { 
-    color: '#ef4444', 
+  'Short_Circuit': {
+    color: '#ef4444',
     gradient: 'from-red-500 to-rose-500',
-    icon: '⚡', 
-    description: 'Critical: Short circuit detected' 
+    icon: '⚡',
+    description: 'Critical: Short circuit detected'
   },
-  'Dust_Accumulation': { 
-    color: '#78716c', 
+  'Dust_Accumulation': {
+    color: '#78716c',
     gradient: 'from-stone-500 to-stone-600',
-    icon: '🌫️', 
-    description: 'Dust reducing panel efficiency' 
+    icon: '🌫️',
+    description: 'Dust reducing panel efficiency'
   },
 }
 
@@ -87,9 +87,9 @@ function Gauge({ value, min, max, label, unit, color, icon: Icon }: {
   const percentage = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100))
   const circumference = 2 * Math.PI * 45
   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`
-  
+
   return (
-    <motion.div 
+    <motion.div
       className="glass-card p-6 flex flex-col items-center"
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300 }}
@@ -134,9 +134,9 @@ function Gauge({ value, min, max, label, unit, color, icon: Icon }: {
 // Status Card Component
 function StatusCard({ prediction }: { prediction: Prediction | null }) {
   if (!prediction) return null
-  
+
   const info = FAULT_INFO[prediction.fault_type] || FAULT_INFO['Normal']
-  
+
   return (
     <motion.div
       className={`glass-card p-8 border-2 ${prediction.is_fault ? 'status-fault' : 'status-normal'}`}
@@ -163,7 +163,7 @@ function StatusCard({ prediction }: { prediction: Prediction | null }) {
           <div className="text-gray-400 mt-1">Confidence</div>
         </div>
       </div>
-      
+
       <div className="mt-6 flex gap-8">
         <div className="flex items-center gap-2">
           <Battery className="w-5 h-5 text-solar-400" />
@@ -183,13 +183,13 @@ function StatusCard({ prediction }: { prediction: Prediction | null }) {
 }
 
 // Connection Panel Component
-function ConnectionPanel({ 
-  mode, 
-  setMode, 
-  isConnected, 
+function ConnectionPanel({
+  mode,
+  setMode,
+  isConnected,
   onConnect,
   simulationFault,
-  setSimulationFault 
+  setSimulationFault
 }: {
   mode: string
   setMode: (m: string) => void
@@ -203,7 +203,7 @@ function ConnectionPanel({
     { id: 'serial', label: 'USB/Serial', icon: Usb, color: 'text-green-400' },
     { id: 'wifi', label: 'WiFi/ESP32', icon: Wifi, color: 'text-purple-400' },
   ]
-  
+
   const faultTypes = [
     { id: 0, name: 'Normal', color: 'bg-green-500' },
     { id: 1, name: 'Open Circuit', color: 'bg-purple-500' },
@@ -211,31 +211,30 @@ function ConnectionPanel({
     { id: 3, name: 'Short Circuit', color: 'bg-red-500' },
     { id: 4, name: 'Dust Accumulation', color: 'bg-stone-500' },
   ]
-  
+
   return (
     <div className="glass-card p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <Settings className="w-5 h-5 text-solar-400" />
         Connection Mode
       </h3>
-      
+
       <div className="grid grid-cols-3 gap-3 mb-6">
         {modes.map(m => (
           <button
             key={m.id}
             onClick={() => setMode(m.id)}
-            className={`p-4 rounded-xl border transition-all ${
-              mode === m.id 
-                ? 'bg-white/10 border-solar-500 shadow-lg shadow-solar-500/20' 
-                : 'border-white/10 hover:bg-white/5'
-            }`}
+            className={`p-4 rounded-xl border transition-all ${mode === m.id
+              ? 'bg-white/10 border-solar-500 shadow-lg shadow-solar-500/20'
+              : 'border-white/10 hover:bg-white/5'
+              }`}
           >
             <m.icon className={`w-6 h-6 mx-auto mb-2 ${m.color}`} />
             <div className="text-sm font-medium">{m.label}</div>
           </button>
         ))}
       </div>
-      
+
       {mode === 'simulator' && (
         <div>
           <h4 className="text-sm font-medium text-gray-400 mb-3">Simulate Fault Type</h4>
@@ -244,11 +243,10 @@ function ConnectionPanel({
               <button
                 key={f.id}
                 onClick={() => setSimulationFault(f.id)}
-                className={`p-3 rounded-lg border transition-all flex items-center gap-2 ${
-                  simulationFault === f.id
-                    ? 'bg-white/10 border-white/30'
-                    : 'border-white/10 hover:bg-white/5'
-                }`}
+                className={`p-3 rounded-lg border transition-all flex items-center gap-2 ${simulationFault === f.id
+                  ? 'bg-white/10 border-white/30'
+                  : 'border-white/10 hover:bg-white/5'
+                  }`}
               >
                 <div className={`w-3 h-3 rounded-full ${f.color}`} />
                 <span className="text-sm">{f.name}</span>
@@ -257,7 +255,7 @@ function ConnectionPanel({
           </div>
         </div>
       )}
-      
+
       {mode === 'serial' && (
         <div>
           <label className="text-sm font-medium text-gray-400">COM Port</label>
@@ -268,27 +266,26 @@ function ConnectionPanel({
           </select>
         </div>
       )}
-      
+
       {mode === 'wifi' && (
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-400">ESP32 IP Address</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="192.168.1.100"
               className="w-full mt-2 p-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500"
             />
           </div>
         </div>
       )}
-      
+
       <button
         onClick={onConnect}
-        className={`w-full mt-6 p-4 rounded-xl font-semibold transition-all ${
-          isConnected
-            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-            : 'bg-gradient-to-r from-solar-500 to-amber-500 text-dark-900 hover:shadow-lg hover:shadow-solar-500/30'
-        }`}
+        className={`w-full mt-6 p-4 rounded-xl font-semibold transition-all ${isConnected
+          ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+          : 'bg-gradient-to-r from-solar-500 to-amber-500 text-dark-900 hover:shadow-lg hover:shadow-solar-500/30'
+          }`}
       >
         {isConnected ? '✓ Connected' : 'Connect'}
       </button>
@@ -315,10 +312,10 @@ function MiniChart({ data, dataKey, color, title }: {
                 <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <Area 
-              type="monotone" 
-              dataKey={dataKey} 
-              stroke={color} 
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke={color}
               strokeWidth={2}
               fill={`url(#gradient-${dataKey})`}
             />
@@ -329,69 +326,129 @@ function MiniChart({ data, dataKey, color, title }: {
   )
 }
 
+interface StationState {
+  sensorData: SensorData | null
+  prediction: Prediction | null
+  history: HistoryEntry[]
+  faultCounts: Record<string, number>
+  lastUpdate: Date
+}
+
 // Main Page Component
 export default function Home() {
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [connectionMode, setConnectionMode] = useState('simulator')
   const [isConnected, setIsConnected] = useState(false)
   const [simulationFault, setSimulationFault] = useState(0)
-  const [sensorData, setSensorData] = useState<SensorData | null>(null)
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [faultCounts, setFaultCounts] = useState<Record<string, number>>({})
-  
+
+  // Multi-station state
+  const [selectedStation, setSelectedStation] = useState<number>(1)
+  const [availableStations, setAvailableStations] = useState<Set<number>>(new Set([1]))
+  const [stationData, setStationData] = useState<Record<number, StationState>>({})
+
+  // Compute current display data from selected station
+  const currentStation = stationData[selectedStation] || {
+    sensorData: null,
+    prediction: null,
+    history: [],
+    faultCounts: {},
+    lastUpdate: new Date()
+  }
+
+  const { sensorData, prediction, history, faultCounts } = currentStation
+
   // WhatsApp notification state
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [whatsappEnabled, setWhatsappEnabled] = useState(false)
   const [whatsappStatus, setWhatsappStatus] = useState<string>('')
-  
+
   // WebSocket connection
   useEffect(() => {
     if (!isMonitoring) return
-    
+
     const ws = new WebSocket('ws://localhost:8000/ws')
-    
+
     ws.onopen = () => {
       console.log('WebSocket connected')
       ws.send(JSON.stringify({ command: 'start' }))
     }
-    
+
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.type === 'data') {
-        setSensorData(data.sensor_data)
-        setPrediction(data.prediction)
-        
-        // Update history
-        const entry: HistoryEntry = {
-          time: new Date().toLocaleTimeString(),
-          voltage: data.sensor_data.voltage,
-          current: data.sensor_data.current,
-          temperature: data.sensor_data.temperature,
-          light: data.sensor_data.light_intensity,
-          power: data.prediction.power,
-          efficiency: data.prediction.efficiency || data.sensor_data.efficiency || 0,
-          fault: data.prediction.fault_type
-        }
-        setHistory(prev => [...prev.slice(-100), entry])
-        
-        // Update fault counts
-        setFaultCounts(prev => ({
-          ...prev,
-          [data.prediction.fault_type]: (prev[data.prediction.fault_type] || 0) + 1
-        }))
+
+      // --- STRICT MODE FILTERING ---
+      // 1. If in Simulator Mode: ONLY accept 'data' (simulated)
+      // 2. If in WiFi/Real Mode: ONLY accept 'gateway_data' (real hardware)
+
+      let targetStationId = 1
+      let incomingSensorData = data.sensor_data
+      let incomingPrediction = data.prediction
+
+      if (connectionMode === 'simulator') {
+        if (data.type !== 'data') return // Ignore real data in sim mode
+        targetStationId = 1
       }
+      else if (connectionMode === 'wifi') {
+        if (data.type !== 'gateway_data') return // Ignore sim data in real mode
+        targetStationId = data.sender_id
+      }
+      else {
+        return // Unknown mode
+      }
+
+      // Update available stations
+      setAvailableStations(prev => {
+        const newSet = new Set(prev)
+        if (!newSet.has(targetStationId)) newSet.add(targetStationId)
+        return newSet
+      })
+
+      // Update Station Data
+      setStationData(prev => {
+        const currentStationState = prev[targetStationId] || {
+          sensorData: null,
+          prediction: null,
+          history: [],
+          faultCounts: {},
+          lastUpdate: new Date()
+        }
+
+        const newEntry: HistoryEntry = {
+          time: new Date().toLocaleTimeString(),
+          voltage: incomingSensorData.voltage,
+          current: incomingSensorData.current,
+          temperature: incomingSensorData.temperature,
+          light: incomingSensorData.light_intensity,
+          power: incomingPrediction.power,
+          efficiency: incomingPrediction.efficiency || incomingSensorData.efficiency || 0,
+          fault: incomingPrediction.fault_type
+        }
+
+        const newFaultCounts = { ...currentStationState.faultCounts }
+        newFaultCounts[incomingPrediction.fault_type] = (newFaultCounts[incomingPrediction.fault_type] || 0) + 1
+
+        return {
+          ...prev,
+          [targetStationId]: {
+            sensorData: incomingSensorData,
+            prediction: incomingPrediction,
+            history: [...currentStationState.history.slice(-100), newEntry],
+            faultCounts: newFaultCounts,
+            lastUpdate: new Date()
+          }
+        }
+      })
     }
-    
+
     ws.onclose = () => console.log('WebSocket disconnected')
-    ws.onerror = (err) => console.error('WebSocket error:', err)
-    
+    ws.onerror = (err: Event) => console.error('WebSocket error:', err)
+
     return () => {
       ws.send(JSON.stringify({ command: 'stop' }))
       ws.close()
     }
   }, [isMonitoring])
-  
+
   // Update simulation fault type
   useEffect(() => {
     if (connectionMode === 'simulator' && isMonitoring) {
@@ -400,11 +457,11 @@ export default function Home() {
       })
     }
   }, [simulationFault, connectionMode, isMonitoring])
-  
+
   const handleConnect = () => {
     setIsConnected(true)
   }
-  
+
   // Configure WhatsApp notifications
   const configureWhatsApp = async () => {
     if (!whatsappNumber || whatsappNumber.length !== 10) {
@@ -417,9 +474,9 @@ export default function Home() {
       const response = await fetch('http://localhost:8000/api/whatsapp/configure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phone_number: fullNumber, 
-          enabled: whatsappEnabled 
+        body: JSON.stringify({
+          phone_number: fullNumber,
+          enabled: whatsappEnabled
         })
       })
       const data = await response.json()
@@ -430,7 +487,7 @@ export default function Home() {
       setTimeout(() => setWhatsappStatus(''), 3000)
     }
   }
-  
+
   // Test WhatsApp notification
   const testWhatsApp = async () => {
     if (!whatsappNumber || whatsappNumber.length !== 10) {
@@ -449,7 +506,7 @@ export default function Home() {
       setTimeout(() => setWhatsappStatus(''), 3000)
     }
   }
-  
+
   const pieData = Object.entries(faultCounts).map(([name, value]) => ({
     name,
     value,
@@ -463,7 +520,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <motion.div 
+              <motion.div
                 className="w-12 h-12 rounded-xl bg-gradient-to-br from-solar-400 to-amber-500 flex items-center justify-center"
                 animate={{ rotate: isMonitoring ? 360 : 0 }}
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
@@ -475,20 +532,37 @@ export default function Home() {
                 <p className="text-sm text-gray-400">AI-Powered Fault Detection System</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-500'}`} />
                 <span className="text-sm">{connectionMode === 'simulator' ? 'Simulator' : connectionMode === 'serial' ? 'USB' : 'WiFi'}</span>
               </div>
-              
+
+              {/* Station Selector */}
+              {availableStations.size > 0 && (
+                <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
+                  {Array.from(availableStations).sort().map(id => (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedStation(id)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedStation === id
+                        ? 'bg-solar-500 text-dark-900 shadow-lg'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                      Station {id}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <motion.button
                 onClick={() => setIsMonitoring(!isMonitoring)}
-                className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
-                  isMonitoring 
-                    ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30' 
-                    : 'bg-gradient-to-r from-solar-500 to-amber-500 text-dark-900 hover:shadow-lg hover:shadow-solar-500/30'
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${isMonitoring
+                  ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
+                  : 'bg-gradient-to-r from-solar-500 to-amber-500 text-dark-900 hover:shadow-lg hover:shadow-solar-500/30'
+                  }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -515,43 +589,43 @@ export default function Home() {
           <div className="col-span-12 lg:col-span-8">
             {/* Sensor Gauges */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <Gauge 
-                value={sensorData?.voltage || 0} 
-                min={0} max={30} 
-                label="Voltage" 
-                unit="V" 
+              <Gauge
+                value={sensorData?.voltage || 0}
+                min={0} max={30}
+                label="Voltage"
+                unit="V"
                 color="#3b82f6"
                 icon={Zap}
               />
-              <Gauge 
-                value={sensorData?.current || 0} 
-                min={0} max={12} 
-                label="Current" 
-                unit="A" 
+              <Gauge
+                value={sensorData?.current || 0}
+                min={0} max={12}
+                label="Current"
+                unit="A"
                 color="#ef4444"
                 icon={Activity}
               />
-              <Gauge 
-                value={sensorData?.temperature || 0} 
-                min={0} max={100} 
-                label="Temperature" 
-                unit="°C" 
+              <Gauge
+                value={sensorData?.temperature || 0}
+                min={0} max={100}
+                label="Temperature"
+                unit="°C"
                 color="#f59e0b"
                 icon={Thermometer}
               />
-              <Gauge 
-                value={sensorData?.light_intensity || 0} 
-                min={0} max={1500} 
-                label="Light" 
-                unit="lux" 
+              <Gauge
+                value={sensorData?.light_intensity || 0}
+                min={0} max={1500}
+                label="Light"
+                unit="lux"
                 color="#22c55e"
                 icon={Eye}
               />
-              <Gauge 
-                value={sensorData?.efficiency || 0} 
-                min={0} max={25} 
-                label="Efficiency" 
-                unit="%" 
+              <Gauge
+                value={sensorData?.efficiency || 0}
+                min={0} max={25}
+                label="Efficiency"
+                unit="%"
                 color="#8b5cf6"
                 icon={Percent}
               />
@@ -584,10 +658,10 @@ export default function Home() {
                     </defs>
                     <XAxis dataKey="time" stroke="#64748b" fontSize={12} />
                     <YAxis stroke="#64748b" fontSize={12} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="power" 
-                      stroke="#fbbf24" 
+                    <Area
+                      type="monotone"
+                      dataKey="power"
+                      stroke="#fbbf24"
                       strokeWidth={2}
                       fill="url(#powerGradient)"
                     />
@@ -690,8 +764,8 @@ export default function Home() {
                   <label className="text-sm text-gray-400 block mb-2">Recipient Phone Number</label>
                   <div className="flex gap-2">
                     <span className="p-3 rounded-lg bg-white/10 border border-white/10 text-gray-300 text-sm">+91</span>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="9945697063"
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
@@ -702,8 +776,8 @@ export default function Home() {
                   <p className="text-xs text-gray-500 mt-1">Enter 10-digit number (without country code)</p>
                 </div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={whatsappEnabled}
                     onChange={(e) => setWhatsappEnabled(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-600 bg-white/5 text-green-500 focus:ring-green-500"
